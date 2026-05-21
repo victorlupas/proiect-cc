@@ -7,8 +7,8 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GKE_CLUSTER: vreme-cluster         # Sa modifice cu numele clusterului tau
-  GKE_REGION: europe-central2        # Sa modifice cu regiunea ta
+  GKE_CLUSTER: vreme-cluster         
+  GKE_REGION: europe-central2        
   REPO_NAME: vreme-repo
   IMAGE_NAME: weather-api
 
