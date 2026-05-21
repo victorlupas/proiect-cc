@@ -1,0 +1,50 @@
+name: Deploy to GKE
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GKE_CLUSTER: vreme-cluster         # Sa modifice cu numele clusterului tau
+  GKE_REGION: europe-central2        # Sa modifice cu regiunea ta
+  REPO_NAME: vreme-repo
+  IMAGE_NAME: weather-api
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Auth to GCP
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+    - name: Setup Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
+    - name: Setup Docker
+      run: |-
+        gcloud auth configure-docker ${{ env.GKE_REGION }}-docker.pkg.dev
+
+    - name: Build Docker Image
+      run: |-
+        docker build -t "${{ env.GKE_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" .
+
+    - name: Push Docker Image
+      run: |-
+        docker push "${{ env.GKE_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+
+    - name: Connect to GKE
+      run: |-
+        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}
+
+    - name: Deploy
+      run: |-
+        kubectl set image deployment/weather-api weather-api=${{ env.GKE_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        kubectl rollout status deployment/weather-api
