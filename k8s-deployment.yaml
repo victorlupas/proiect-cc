@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-api
+spec:
+  replicas: 2 # Pornim 2 servere simultan
+  selector:
+    matchLabels:
+      app: weather-api
+  template:
+    metadata:
+      labels:
+        app: weather-api
+    spec:
+      containers:
+      - name: weather-api
+        image: europe-central2-docker.pkg.dev/vm-deb9/vreme-repo/weather-api:v1
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/gcp/credentials.json
+        volumeMounts:
+        - name: gcp-credentials-volume
+          mountPath: /etc/gcp
+          readOnly: true
+      volumes:
+      - name: gcp-credentials-volume
+        secret:
+          secretName: gcs-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-api-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: weather-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
