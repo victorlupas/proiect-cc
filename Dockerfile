@@ -16,3 +16,4 @@ EXPOSE 8080
 
 #se ruleaza aplicatia folosind gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "main:app"]
+
